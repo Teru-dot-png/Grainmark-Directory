@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grainmark Business Directory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #2d3748; } /* dark track */
+        ::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; } /* lighter thumb */
+        ::-webkit-scrollbar-thumb:hover { background: #718096; }
+        .modal-backdrop, #drawer-backdrop { display: none; position: fixed; z-index: 40; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
+        .modal-content { position: relative; margin: 5% auto; width: 90%; max-width: 550px; }
+        .animate-fade-in { animation: fadeIn 0.3s; }
+        .notification { position: fixed; top: 20px; right: 20px; z-index: 50; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        #image-url-group { display: none; }
+        #qrcode-container img {
+            margin: auto;
+            background: white;
+            padding: 6px;
+            border-radius: 8px;
+        }
+        /* For stats drawer */
+        #stats-drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 350px;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 45;
+        }
+        #stats-drawer.open {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body class="bg-gray-800 text-gray-200 flex flex-col h-screen">
+
+    <div id="notification-area" class="notification"></div>
+
+    <!-- Stats Drawer Backdrop -->
+    <div id="drawer-backdrop"></div>
+
+    <!-- Stats Drawer -->
+    <div id="stats-drawer" class="bg-gray-900 p-6 shadow-2xl flex flex-col">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Statistics</h2>
+            <button id="close-stats-btn" class="p-1 rounded-full hover:bg-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div id="stats-content" class="space-y-4">
+            <!-- Stats will be populated here by JS -->
+        </div>
+    </div>
+
+
+    <!-- Top Header Bar -->
+    <header class="bg-gray-900 shadow-lg p-3 flex-shrink-0 z-10">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                 <button id="open-stats-btn" class="text-sm bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300">Stats</button>
+                 <h1 class="text-xl font-bold text-white">Grainmark Business Directory</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <input type="file" id="json-file-input" accept=".json" class="hidden">
+                <button id="load-json-btn" class="text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300">Load File</button>
+                <button id="save-json-btn" class="text-sm bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300">Save File</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow flex flex-col md:flex-row gap-4 p-4 overflow-hidden">
+        
+        <!-- Left Column: Business List & Controls -->
+        <div class="md:w-[400px] flex-shrink-0 bg-gray-900 p-4 rounded-lg shadow-md flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Businesses</h2>
+                <button id="add-new-business-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">+ Add</button>
+            </div>
+             <!-- Search and Sort Controls -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                <input type="search" id="search-input" placeholder="Search by name or permit..." class="sm:col-span-2 w-full bg-gray-800 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <select id="sort-select" class="sm:col-span-1 w-full bg-gray-800 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="name-asc">Sort: Name (A-Z)</option>
+                    <option value="date-desc">Sort: Date (Newest)</option>
+                    <option value="date-asc">Sort: Date (Oldest)</option>
+                </select>
+                <select id="filter-id-select" class="sm:col-span-1 w-full bg-gray-800 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="all">Filter: All IDs</option>
+                    <option value="id-done">Filter: ID Done</option>
+                    <option value="id-none">Filter: No ID</option>
+                </select>
+            </div>
+            <div id="business-list" class="space-y-2 flex-grow overflow-y-auto pr-2">
+                <!-- Business items will be populated by JS -->
+            </div>
+        </div>
+
+        <!-- Right Column: Business Details -->
+        <div class="flex-grow bg-gray-900 p-6 rounded-lg shadow-md overflow-y-auto">
+            <div id="details-view" class="h-full flex items-center justify-center text-center">
+                 <div class="text-gray-500">
+                    <svg class="mx-auto h-12 w-12" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <h3 class="mt-2 text-lg font-medium">No data loaded</h3>
+                    <p class="mt-1 text-sm">Click "Load File" to import your business data.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Add/Edit Business -->
+    <div id="business-modal" class="modal-backdrop">
+        <div class="modal-content bg-gray-800 border border-gray-700 text-gray-200 p-8 rounded-lg shadow-xl animate-fade-in">
+            <h2 id="modal-title" class="text-2xl font-bold mb-6">Add New Business</h2>
+            <form id="business-form">
+                <input type="hidden" id="business-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <h3 class="md:col-span-2 text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2">Business Info</h3>
+                    <div><label for="owner-name" class="block text-sm font-medium text-gray-400">Owner Name</label><input type="text" id="owner-name" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm py-2 px-3" required></div>
+                    <div><label for="business-name" class="block text-sm font-medium text-gray-400">Business Name</label><input type="text" id="business-name" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm py-2 px-3" required></div>
+                    <div><label for="trade-type" class="block text-sm font-medium text-gray-400">Trade Type</label><input type="text" id="trade-type" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm py-2 px-3" placeholder="e.g., Blacksmith"></div>
+                    <div>
+                        <label for="permit-number" class="block text-sm font-medium text-gray-400">Permit Number</label>
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                            <input type="text" id="permit-number" class="flex-1 block w-full bg-gray-700 border-gray-600 rounded-none rounded-l-md py-2 px-3" required>
+                            <button type="button" id="generate-permit-btn" title="Generate Permit Number" class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-600 bg-gray-500 text-white text-sm hover:bg-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0L7.86 5.89a2 2 0 00-1.29.98L4.6 9.05c-1.12.87-1.12 2.6 0 3.46l1.97 1.18a2 2 0 001.29.98l.65 2.72c.38 1.56 2.6 1.56 2.98 0l.65-2.72a2 2 0 001.29-.98l1.97-1.18c1.12-.87 1.12-2.6 0-3.46l-1.97-1.18a2 2 0 00-1.29-.98L11.49 3.17zM15.66 6.34a1 1 0 01.28.28l.83.83a1 1 0 010 1.41l-.83.83a1 1 0 01-.28.28l-1.41 0a1 1 0 01-.28-.28l-.83-.83a1 1 0 010-1.41l.83-.83a1 1 0 01.28-.28l1.41 0zM6.34 15.66a1 1 0 01-.28-.28l-.83-.83a1 1 0 010-1.41l.83-.83a1 1 0 01.28-.28l1.41 0a1 1 0 01.28.28l.83.83a1 1 0 010 1.41l-.83.83a1 1 0 01-.28.28l-1.41 0z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                        <p id="permit-warning" class="mt-2 text-sm text-red-500 hidden">This PN already exists</p>
+                    </div>
+                    <div class="md:col-span-2"><label for="residence" class="block text-sm font-medium text-gray-400">Current Residence/Location</label><input type="text" id="residence" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm py-2 px-3" placeholder="e.g., 0,-2;107"></div>
+
+                    <h3 class="md:col-span-2 text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2 mt-4">Identity Info</h3>
+                     <div><label for="born-residence" class="block text-sm font-medium text-gray-400">Born Residence</label><input type="text" id="born-residence" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm py-2 px-3 transition-colors"></div>
+                      <div class="relative flex items-center pt-6">
+                        <div class="flex items-center h-5"><input id="is-outsider" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 bg-gray-700 border-gray-600 rounded"></div>
+                        <div class="ml-3 text-sm"><label for="is-outsider" class="font-medium text-gray-300">Is an Outsider</label></div>
+                    </div>
+                    
+                    <h3 class="md:col-span-2 text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2 mt-4">ID Card Status</h3>
+                    <div class="md:col-span-2">
+                        <div class="relative flex items-start">
+                            <div class="flex items-center h-5"><input id="has-id" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 bg-gray-700 border-gray-600 rounded"></div>
+                            <div class="ml-3 text-sm"><label for="has-id" class="font-medium text-gray-300">ID Card is Done</label></div>
+                        </div>
+                        <div id="image-url-group" class="mt-4">
+                            <label for="image-url" class="block text-sm font-medium text-gray-400">ID Card Image URL</label>
+                            <input type="url" id="image-url" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm py-2 px-3" placeholder="https://example.com/image.png">
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" id="cancel-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
+                    <button type="submit" id="save-business-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed">Save Business</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- ELEMENT REFERENCES ---
+            const businessListEl = document.getElementById('business-list');
+            const detailsViewEl = document.getElementById('details-view');
+            const addNewBtn = document.getElementById('add-new-business-btn');
+            const modal = document.getElementById('business-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const cancelBtn = document.getElementById('cancel-btn');
+            const businessForm = document.getElementById('business-form');
+            const loadJsonBtn = document.getElementById('load-json-btn');
+            const saveJsonBtn = document.getElementById('save-json-btn');
+            const jsonFileInput = document.getElementById('json-file-input');
+            const notificationArea = document.getElementById('notification-area');
+            const hasIdCheckbox = document.getElementById('has-id');
+            const isOutsiderCheckbox = document.getElementById('is-outsider');
+            const bornResidenceInput = document.getElementById('born-residence');
+            const imageUrlGroup = document.getElementById('image-url-group');
+            const searchInput = document.getElementById('search-input');
+            const sortSelect = document.getElementById('sort-select');
+            const filterIdSelect = document.getElementById('filter-id-select');
+            const generatePermitBtn = document.getElementById('generate-permit-btn');
+            const permitNumberInput = document.getElementById('permit-number');
+            const permitWarningEl = document.getElementById('permit-warning');
+            const saveBusinessBtn = document.getElementById('save-business-btn');
+            const openStatsBtn = document.getElementById('open-stats-btn');
+            const closeStatsBtn = document.getElementById('close-stats-btn');
+            const statsDrawer = document.getElementById('stats-drawer');
+            const drawerBackdrop = document.getElementById('drawer-backdrop');
+            const statsContent = document.getElementById('stats-content');
+            
+            let businesses = [];
+            let sessionNotes = {}; 
+            let activeBusinessId = null;
+
+            function showNotification(message, isError = false) {
+                const bgColor = isError ? 'bg-red-500' : 'bg-green-500';
+                const note = document.createElement('div');
+                note.className = `p-4 text-white rounded-lg shadow-lg animate-fade-in ${bgColor}`;
+                note.textContent = message;
+                notificationArea.appendChild(note);
+                setTimeout(() => note.remove(), 3000);
+            }
+
+            function copyToClipboard(text) {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showNotification(`Copied: "${text}"`);
+                } catch (err) {
+                    showNotification('Failed to copy text.', true);
+                }
+                document.body.removeChild(textArea);
+            }
+            
+            function updateBornResidenceState() {
+                if (!isOutsiderCheckbox.checked) {
+                    bornResidenceInput.value = 'Grainmark';
+                    bornResidenceInput.readOnly = true;
+                    bornResidenceInput.classList.add('bg-gray-700', 'cursor-not-allowed');
+                } else {
+                    if (bornResidenceInput.value === 'Grainmark') {
+                         bornResidenceInput.value = '';
+                    }
+                    bornResidenceInput.readOnly = false;
+                    bornResidenceInput.classList.remove('bg-gray-700', 'cursor-not-allowed');
+                    bornResidenceInput.placeholder = 'e.g., Distant Lands';
+                }
+            }
+            
+            function validatePermitNumber() {
+                const permitNumber = permitNumberInput.value.trim();
+                const currentId = parseInt(document.getElementById('business-id').value, 10);
+
+                if (!permitNumber) {
+                    permitWarningEl.classList.add('hidden');
+                    saveBusinessBtn.disabled = false;
+                    return;
+                }
+
+                const isDuplicate = businesses.some(b => 
+                    b.permitNumber &&
+                    b.permitNumber.toLowerCase() === permitNumber.toLowerCase() && 
+                    b.id !== currentId
+                );
+
+                if (isDuplicate) {
+                    permitWarningEl.classList.remove('hidden');
+                    saveBusinessBtn.disabled = true;
+                } else {
+                    permitWarningEl.classList.add('hidden');
+                    saveBusinessBtn.disabled = false;
+                }
+            }
+            
+            function handleGeneratePermit() {
+                const ownerName = document.getElementById('owner-name').value;
+                const businessName = document.getElementById('business-name').value;
+                const tradeType = document.getElementById('trade-type').value;
+                const residence = document.getElementById('residence').value;
+                const isOutsider = document.getElementById('is-outsider').checked;
+
+                if (!ownerName || !businessName || !tradeType || !residence) {
+                    showNotification("Please fill Owner, Business, Trade Type, and Residence fields first.", true);
+                    return;
+                }
+
+                const a = ownerName.charAt(0).toUpperCase();
+                const digits = residence.replace(/[^0-9]/g, '');
+                const num = digits.substring(0, 2).padEnd(2, '0');
+                const c = businessName.charAt(0).toUpperCase();
+                const d = tradeType.charAt(0).toUpperCase();
+                const x = isOutsider ? 'O' : '';
+
+                permitNumberInput.value = `${a}${num}${c}${d}${x}`;
+                validatePermitNumber(); // Check if the generated one is a duplicate
+                showNotification("Permit Number Generated!");
+            }
+
+            function getFilteredAndSortedBusinesses() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const sortBy = sortSelect.value;
+                const filterIdBy = filterIdSelect.value; 
+
+                let processedBusinesses = businesses.filter(b => 
+                    b.businessName.toLowerCase().includes(searchTerm) ||
+                    b.ownerName.toLowerCase().includes(searchTerm) ||
+                    (b.permitNumber && b.permitNumber.toLowerCase().includes(searchTerm))
+                );
+
+                if (filterIdBy === 'id-done') {
+                    processedBusinesses = processedBusinesses.filter(b => b.hasId);
+                } else if (filterIdBy === 'id-none') {
+                    processedBusinesses = processedBusinesses.filter(b => !b.hasId);
+                }
+
+                return processedBusinesses.sort((a, b) => {
+                    if (sortBy === 'name-asc') return a.businessName.localeCompare(b.businessName);
+                    if (sortBy === 'date-desc') return new Date(b.dateOfIssue) - new Date(a.dateOfIssue);
+                    if (sortBy === 'date-asc') return new Date(a.dateOfIssue) - new Date(b.dateOfIssue);
+                    return 0;
+                });
+            }
+
+            function renderBusinessList() {
+                const processedBusinesses = getFilteredAndSortedBusinesses();
+                businessListEl.innerHTML = '';
+                if (processedBusinesses.length === 0) {
+                     businessListEl.innerHTML = `<div class="text-center text-gray-500 p-4">No businesses match.</div>`;
+                     return;
+                }
+                
+                processedBusinesses.forEach(business => {
+                    const isActive = business.id === activeBusinessId;
+                    const itemClasses = `p-3 rounded-lg cursor-pointer transition duration-200 ${isActive ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-800 hover:bg-gray-700'}`;
+                    const outsiderCheck = business.isOutsider ? `<span class="text-gray-400" title="Outsider">✓</span>` : '';
+                    const idDoneCheck = business.hasId ? `<span class="text-green-400 font-bold" title="ID is done">✓</span>` : '';
+
+                    const item = document.createElement('div');
+                    item.className = itemClasses;
+                    item.dataset.id = business.id;
+                    item.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-semibold text-md truncate">${business.businessName}</h3>
+                            <div class="flex gap-2 items-center text-lg">${outsiderCheck} ${idDoneCheck}</div>
+                        </div>
+                        <p class="text-sm ${isActive ? 'text-blue-100' : 'text-gray-400'}">Owner: ${business.ownerName}</p>
+                    `;
+                    item.addEventListener('click', () => {
+                        activeBusinessId = business.id;
+                        renderAll();
+                    });
+                    businessListEl.appendChild(item);
+                });
+            }
+            
+            function updateStatistics() {
+                const total = businesses.length;
+                if (total === 0) {
+                    statsContent.innerHTML = `<p class="text-gray-500 text-center">No data to analyze.</p>`;
+                    return;
+                }
+                const idsDone = businesses.filter(b => b.hasId).length;
+                const idPercentage = total > 0 ? Math.round((idsDone / total) * 100) : 0;
+                
+                const locals = businesses.filter(b => !b.isOutsider).length;
+                const outsiders = total - locals;
+                
+                const tradeCounts = businesses.reduce((acc, b) => {
+                    if(b.tradeType) {
+                       acc[b.tradeType] = (acc[b.tradeType] || 0) + 1;
+                    }
+                    return acc;
+                }, {});
+                
+                const topTrades = Object.entries(tradeCounts).sort((a,b) => b[1] - a[1]).slice(0, 3);
+
+                statsContent.innerHTML = `
+                    <div class="text-sm">
+                        <div class="flex justify-between"><span>Total Businesses:</span> <span class="font-bold">${total}</span></div>
+                        <div class="flex justify-between items-center mt-2"><span>IDs Complete:</span> <span class="font-bold">${idsDone} / ${total}</span></div>
+                        <div class="w-full bg-gray-700 rounded-full h-2.5 my-1">
+                            <div class="bg-green-500 h-2.5 rounded-full" style="width: ${idPercentage}%"></div>
+                        </div>
+                        <div class="flex justify-between mt-2"><span>Locals / Outsiders:</span> <span class="font-bold">${locals} / ${outsiders}</span></div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mt-4 mb-2 text-gray-400 border-t border-gray-700 pt-4">Top Trade Types</h4>
+                        <div class="space-y-1 text-sm">
+                            ${topTrades.length > 0 ? topTrades.map(([type, count]) => `<div class="flex justify-between"><span>${type}:</span> <span class="font-bold">${count}</span></div>`).join('') : '<p class="text-gray-500">No trades specified.</p>'}
+                        </div>
+                    </div>
+                `;
+            }
+
+            function displayBusinessDetails(id) {
+                const business = businesses.find(b => b.id === id);
+                if (!business) { resetDetailsView(); return; }
+
+                let imageDisplay = '';
+                if (business.hasId && business.imageUrl) {
+                    imageDisplay = `<div class="mb-6"><img src="${business.imageUrl}" alt="ID Card" class="w-full h-auto object-contain rounded-lg border border-gray-700 shadow-lg max-h-80" onerror="this.onerror=null;this.src='https://placehold.co/800x400/2d3748/9ca3af?text=Image+Not+Found';"></div>`;
+                }
+                
+                const qrText = `Owner: ${business.ownerName}\nBusiness: ${business.businessName}\nPermit: ${business.permitNumber}`;
+                const typeNumber = 0; 
+                const errorCorrectionLevel = 'L';
+                const qr = qrcode(typeNumber, errorCorrectionLevel);
+                qr.addData(qrText);
+                qr.make();
+                const qrCodeImage = qr.createImgTag(5, 10);
+
+                const createFieldHTML = (label, value) => {
+                    return `
+                        <div class="p-3 bg-gray-800 rounded-lg flex justify-between items-center">
+                            <div>
+                                <strong class="text-gray-500 block">${label}:</strong>
+                                <span class="text-lg">${value || 'N/A'}</span>
+                            </div>
+                            <button class="copy-btn p-1 rounded-md hover:bg-gray-700" data-copy-text="${value || ''}" title="Copy">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" /><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" /></svg>
+                            </button>
+                        </div>
+                    `;
+                };
+
+                detailsViewEl.innerHTML = `
+                    <div class="flex flex-col h-full text-left">
+                        <div class="flex-grow">
+                            ${imageDisplay}
+                            <div class="text-center border-b border-gray-700 pb-4 mb-4">
+                                <h2 class="text-3xl font-bold text-white">${business.businessName}</h2>
+                                <p class="text-lg text-gray-400">Operated by ${business.ownerName}</p>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                ${createFieldHTML('Trade Type', business.tradeType)}
+                                ${createFieldHTML('Permit Number', business.permitNumber)}
+                                ${createFieldHTML('Current Residence', business.residence)}
+                                ${createFieldHTML('Born Residence', business.bornResidence)}
+                                ${createFieldHTML('Date of Issue', business.dateOfIssue)}
+                                ${createFieldHTML('Is Outsider', business.isOutsider ? 'Yes' : 'No')}
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 pt-6 border-t border-gray-700">
+                            <h3 class="text-lg font-semibold text-gray-400 mb-2">Session Notes</h3>
+                            <textarea id="session-note-textarea" data-id="${business.id}" class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 h-24" placeholder="Type temporary notes here..."></textarea>
+                        </div>
+
+                        <div class="mt-6 pt-6 border-t border-gray-700 text-center">
+                             <h3 class="text-lg font-semibold text-gray-400 mb-4">Business QR Code</h3>
+                             <div id="qrcode-container">${qrCodeImage}</div>
+                        </div>
+                        <div class="mt-auto pt-6 flex justify-end gap-3">
+                            <button data-id="${business.id}" class="edit-btn bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg">Edit</button>
+                            <button data-id="${business.id}" class="delete-btn bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Delete</button>
+                        </div>
+                    </div>`;
+                
+                const noteTextarea = detailsViewEl.querySelector('#session-note-textarea');
+                noteTextarea.value = sessionNotes[business.id] || '';
+                noteTextarea.addEventListener('input', (e) => {
+                    sessionNotes[business.id] = e.target.value;
+                });
+
+                detailsViewEl.querySelectorAll('.copy-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        copyToClipboard(e.currentTarget.dataset.copyText);
+                    });
+                });
+
+                detailsViewEl.querySelector('.edit-btn').addEventListener('click', () => openModal(business));
+                detailsViewEl.querySelector('.delete-btn').addEventListener('click', () => deleteBusiness(business.id));
+            }
+            
+            function resetDetailsView() {
+                detailsViewEl.innerHTML = `<div class="text-gray-500 text-center"><h3 class="mt-2 text-lg font-medium">No business selected</h3><p class="mt-1 text-sm">Select a business from the list on the left.</p></div>`;
+            }
+
+            function openModal(business = null) {
+                businessForm.reset();
+                imageUrlGroup.style.display = 'none';
+                saveBusinessBtn.disabled = false;
+                permitWarningEl.classList.add('hidden');
+
+                if (business) {
+                    modalTitle.textContent = 'Edit Business';
+                    document.getElementById('business-id').value = business.id;
+                    document.getElementById('owner-name').value = business.ownerName;
+                    document.getElementById('business-name').value = business.businessName;
+                    document.getElementById('trade-type').value = business.tradeType;
+                    permitNumberInput.value = business.permitNumber;
+                    document.getElementById('residence').value = business.residence;
+                    document.getElementById('born-residence').value = business.bornResidence || '';
+                    isOutsiderCheckbox.checked = business.isOutsider || false;
+                    hasIdCheckbox.checked = business.hasId || false;
+                    document.getElementById('image-url').value = business.imageUrl || '';
+                } else {
+                    modalTitle.textContent = 'Add New Business';
+                    document.getElementById('business-id').value = '';
+                    isOutsiderCheckbox.checked = false; 
+                }
+                hasIdCheckbox.dispatchEvent(new Event('change'));
+                updateBornResidenceState();
+                modal.style.display = 'flex';
+                modal.classList.add('items-center', 'justify-center');
+            }
+
+            function closeModal() { modal.style.display = 'none'; }
+            
+            function openDrawer() {
+                statsDrawer.classList.add('open');
+                drawerBackdrop.style.display = 'block';
+            }
+            
+            function closeDrawer() {
+                statsDrawer.classList.remove('open');
+                drawerBackdrop.style.display = 'none';
+            }
+
+            function handleFormSubmit(e) {
+                e.preventDefault();
+                const idFromForm = document.getElementById('business-id').value;
+                const businessData = {
+                    ownerName: document.getElementById('owner-name').value,
+                    businessName: document.getElementById('business-name').value,
+                    tradeType: document.getElementById('trade-type').value,
+                    permitNumber: permitNumberInput.value,
+                    residence: document.getElementById('residence').value,
+                    bornResidence: bornResidenceInput.value,
+                    isOutsider: isOutsiderCheckbox.checked,
+                    hasId: hasIdCheckbox.checked,
+                    imageUrl: document.getElementById('image-url').value,
+                };
+
+                if (idFromForm) {
+                    const numericId = parseInt(idFromForm, 10);
+                    const index = businesses.findIndex(b => b.id === numericId);
+
+                    if (index > -1) {
+                        businesses[index] = { ...businesses[index], ...businessData };
+                        activeBusinessId = numericId;
+                    } else {
+                        showNotification("Error: Could not save. Business not found.", true);
+                        closeModal();
+                        return;
+                    }
+                } else {
+                    businessData.id = Date.now();
+                    businessData.dateOfIssue = new Date().toISOString().split('T')[0];
+                    businesses.push(businessData);
+                    activeBusinessId = businessData.id;
+                }
+                renderAll();
+                closeModal();
+                showNotification(`Business "${businessData.businessName}" saved!`);
+            }
+            
+            function deleteBusiness(id) {
+                 if (confirm('Are you sure you want to delete this business?')) {
+                    businesses = businesses.filter(b => b.id !== id);
+                    if (activeBusinessId === id) {
+                        activeBusinessId = null;
+                        delete sessionNotes[id]; // Also remove session note
+                    }
+                    renderAll();
+                    showNotification('Business deleted.');
+                }
+            }
+            
+            function renderAll() {
+                 renderBusinessList();
+                 updateStatistics();
+                 if (activeBusinessId) {
+                    const businessExists = businesses.some(b => b.id === activeBusinessId);
+                    if (businessExists) {
+                        displayBusinessDetails(activeBusinessId);
+                    } else {
+                        activeBusinessId = null;
+                        resetDetailsView();
+                    }
+                 } else {
+                    resetDetailsView();
+                 }
+            }
+            
+            function loadData(data) {
+                if (!Array.isArray(data)) throw new Error('JSON is not an array.');
+                businesses = data; 
+                sessionNotes = {}; // Reset session notes on new file load
+                activeBusinessId = null; 
+                renderAll();
+            }
+
+            function handleFileLoad(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        loadData(data);
+                        showNotification('Data loaded from file!', false);
+                    } catch (err) { showNotification(`Error loading file: ${err.message}`, true); }
+                };
+                reader.readAsText(file);
+                jsonFileInput.value = '';
+            }
+
+            async function loadDefaultData() {
+                try {
+                    const response = await fetch('businesses.json');
+                    if (response.ok) {
+                        const data = await response.json();
+                        loadData(data);
+                        showNotification('Default directory loaded successfully!');
+                    } else {
+                        showNotification('Default directory not loaded.', true);
+                        renderAll();
+                    }
+                } catch (error) {
+                    showNotification('Could not fetch default directory.', true);
+                    renderAll();
+                }
+            }
+
+            function handleFileSave() {
+                if (businesses.length === 0) { showNotification('No data to save.', true); return; }
+                const dataStr = JSON.stringify(businesses, null, 2);
+                const blob = new Blob([dataStr], {type: "application/json"});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'businesses.json'; a.click();
+                URL.revokeObjectURL(url);
+                showNotification('Data saved to businesses.json!');
+            }
+            
+            // --- EVENT LISTENERS ---
+            addNewBtn.addEventListener('click', () => openModal());
+            cancelBtn.addEventListener('click', closeModal);
+            businessForm.addEventListener('submit', handleFormSubmit);
+            generatePermitBtn.addEventListener('click', handleGeneratePermit);
+            permitNumberInput.addEventListener('input', validatePermitNumber);
+            loadJsonBtn.addEventListener('click', () => jsonFileInput.click());
+            jsonFileInput.addEventListener('change', handleFileLoad);
+            saveJsonBtn.addEventListener('click', handleFileSave);
+            hasIdCheckbox.addEventListener('change', (e) => { imageUrlGroup.style.display = e.target.checked ? 'block' : 'none'; });
+            isOutsiderCheckbox.addEventListener('change', updateBornResidenceState);
+            searchInput.addEventListener('input', renderBusinessList);
+            sortSelect.addEventListener('change', renderBusinessList);
+            filterIdSelect.addEventListener('change', renderBusinessList); 
+            openStatsBtn.addEventListener('click', openDrawer);
+            closeStatsBtn.addEventListener('click', closeDrawer);
+            drawerBackdrop.addEventListener('click', closeDrawer);
+            window.onclick = (event) => { if (event.target == modal) closeModal(); }
+
+            // --- INITIALIZATION ---
+            loadDefaultData();
+        });
+    </script>
+</body>
+</html>

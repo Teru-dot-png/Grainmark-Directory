@@ -112,7 +112,7 @@
     "bornResidence": "Grainmark",
     "isOutsider": false,
     "hasId": true,
-    "imageUrl": "https://cdn.discordapp.com/attachments/1381341763041493233/1381625191192465408/image.png?ex=684c26ba&is=684ad53a&hm=a401577454bd389ec201b06de9d7896e9af7f1c74be37e765f56ae63d7a5c12b&",
+    "imageUrl": "https://github.com/Teru-dot-png/Grainmark-Directory/blob/master/Businesses/Lysteria-Grainmark%20art%20district-%20L11GA/Lysteria%20ID%20BUSINESS%20cut.png?raw=true",
     "id": 1749772649786,
     "dateOfIssue": "2025-06-12"
   },
@@ -203,7 +203,7 @@
     "bornResidence": "Grainmark",
     "isOutsider": false,
     "hasId": true,
-    "imageUrl": "https://cdn.discordapp.com/attachments/1381341763041493233/1382035850040184832/image.png?ex=684c53af&is=684b022f&hm=93bd09a1fd4ebf468253371a7b9105d85fb882e91513879670e774d7a358cfa2&",
+    "imageUrl": "https://github.com/Teru-dot-png/Grainmark-Directory/blob/master/Businesses/Liloure-Goose%20&%20Grinkle-L11GA/Liloure%20ID%20BUSINESS%20cut.png?raw=true",
     "id": 1749774018963,
     "dateOfIssue": "2025-06-13"
   },
@@ -320,7 +320,7 @@
     "bornResidence": "Grainmark",
     "isOutsider": false,
     "hasId": true,
-    "imageUrl": "https://cdn.discordapp.com/attachments/1381298332420407376/1382943840054284358/Koreokokaisuru_ID_BUSINESS_cut.png?ex=684cfe51&is=684bacd1&hm=c3b35f323060a0f092a8d94e7e8bad7101453d158ea5582397e84dbae4e6fe68&",
+    "imageUrl": "https://github.com/Teru-dot-png/Grainmark-Directory/blob/master/Businesses/Koreokokaisuru-Goober%20Drawer-%20K11GA/Koreokokaisuru%20ID%20BUSINESS%20cut.png?raw=true",
     "id": 1749776423311,
     "dateOfIssue": "2025-06-13"
   },
@@ -362,5 +362,44 @@
     "imageUrl": "https://cdn.discordapp.com/attachments/1381298332420407376/1383114055698354267/KING568YT_ID_BUSINESS_cut.png?ex=684d9cd7&is=684c4b57&hm=34a6b81e1c3f3e52db0f45443a631a89cd153df613b7a6d423b2374f6034a1e8&",
     "id": 1749784340386,
     "dateOfIssue": "2025-06-13"
+  },
+  {
+    "ownerName": "Tasty_Nugget2000",
+    "businessName": "Pearl selling",
+    "tradeType": "Pearls",
+    "permitNumber": "T11PP",
+    "residence": "-1,-1",
+    "bornResidence": "Grainmark",
+    "isOutsider": false,
+    "hasId": false,
+    "imageUrl": "",
+    "id": 1749956824483,
+    "dateOfIssue": "2025-06-15"
+  },
+  {
+    "ownerName": "Azon Union",
+    "businessName": "Unions Manna and Pearl Surplus",
+    "tradeType": "Manna, pearls",
+    "permitNumber": "A31UMO",
+    "residence": "3, -1;99,-14;1",
+    "bornResidence": "Thugville",
+    "isOutsider": true,
+    "hasId": false,
+    "imageUrl": "",
+    "id": 1750091541714,
+    "dateOfIssue": "2025-06-16"
+  },
+  {
+    "ownerName": "Gonzozcrack",
+    "businessName": "Pearl Selling",
+    "tradeType": "Pearls",
+    "permitNumber": "G00PPO",
+    "residence": "0,0; 80,-89;1",
+    "bornResidence": "An Bread Capital",
+    "isOutsider": true,
+    "hasId": false,
+    "imageUrl": "",
+    "id": 1750091728934,
+    "dateOfIssue": "2025-06-16"
   }
 ]

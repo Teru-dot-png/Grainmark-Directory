@@ -559,7 +559,7 @@
                 if(!newBase) { resultsEl.innerHTML = 'Please provide the New GitHub Base URL.'; confirmBtn.classList.add('hidden'); return; }
                 const affected = businesses.filter(b => b.hasId && b.permitNumber);
                 if(affected.length === 0) { resultsEl.innerHTML = 'No businesses with IDs and Permit Numbers found to relink.'; confirmBtn.classList.add('hidden'); return; }
-                resultsEl.innerHTML = `<strong>${affected.length} businesses will be updated:</strong><ul class="list-disc pl-5">${affected.map(b => `<li>${b.businessName} → .../${b.permitNumber}.png</li>`).join('')}</ul>`;
+                resultsEl.innerHTML = `<strong>${affected.length} businesses will be updated:</strong><ul class="list-disc pl-5">${affected.map(b => `<li>${b.businessName} → .../${b.permitNumber}.png?raw=true</li>`).join('')}</ul>`;
                 confirmBtn.classList.remove('hidden');
             }
 
@@ -569,7 +569,7 @@
                 let count = 0;
                 businesses.forEach(b => {
                     if(b.hasId && b.permitNumber) {
-                        b.imageUrl = `${newBase}${b.permitNumber}.png`;
+                        b.imageUrl = `${newBase}${b.permitNumber}.png?raw=true`;
                         count++;
                     }
                 });
@@ -619,7 +619,7 @@
                 if (action === 'context-relink') {
                     const newBase = prompt("Enter your new GitHub base URL (e.g., https://raw.githubusercontent.com/user/repo/main/images/):");
                     if (newBase && business.permitNumber) {
-                        business.imageUrl = `${newBase}${business.permitNumber}.png`;
+                        business.imageUrl = `${newBase}${business.permitNumber}.png?raw=true`;
                         renderAll();
                         showNotification('Image link updated!');
                     } else if (!business.permitNumber) {

@@ -410,9 +410,22 @@
     "residence": "-1, -1,-1;80,97;1",
     "bornResidence": "Grainmark",
     "isOutsider": false,
-    "hasId": false,
-    "imageUrl": "",
+    "hasId": true,
+    "imageUrl": "https://github.com/Teru-dot-png/Grainmark-Directory/blob/master/organized/A11PP.png?raw=true",
     "id": 1750553186948,
     "dateOfIssue": "2025-06-22"
+  },
+  {
+    "ownerName": "Payduck11",
+    "businessName": "Full moon tarot",
+    "tradeType": "Bread, future readings",
+    "permitNumber": "P11FB",
+    "residence": "-1,-1;0,20;1",
+    "bornResidence": "Grainmark",
+    "isOutsider": false,
+    "hasId": false,
+    "imageUrl": "",
+    "id": 1750639269025,
+    "dateOfIssue": "2025-06-23"
   }
 ]

@@ -9,7 +9,7 @@
     "profileId": "217495890",
     "dateOfIssue": "2025-06-23",
     "registrationPermitCode": "GRA-AMSH06-INV",
-    "imageIdLink": "",
+    "imageIdLink": "https://github.com/Teru-dot-png/Grainmark-Directory/blob/master/ATU%20Businesses/GRA-AMSH06-INV/BUSINESS-cut.png?raw=true",
     "stampAmount": "1",
     "hasIdDone": true,
     "stamps": [
@@ -20,5 +20,39 @@
     ],
     "id": "local-1750650059017",
     "createdAt": "2025-06-23T03:40:59.017Z"
+  },
+  {
+    "docId": "local-1751016824310",
+    "ownerName": "Vik",
+    "businessName": "The Creek Retreat",
+    "tradeType": "Gallery, Cafe",
+    "residenceVillage": "Croissant Creek",
+    "residenceCoordinates": "-1,1;0,57,1",
+    "profileId": "7103945240",
+    "dateOfIssue": "2025-06-27",
+    "registrationPermitCode": "CRO-VITH06-GAL",
+    "imageIdLink": "",
+    "stampAmount": "0",
+    "hasIdDone": false,
+    "stamps": [],
+    "id": "local-1751016824310",
+    "createdAt": "2025-06-27T09:33:44.310Z"
+  },
+  {
+    "docId": "",
+    "ownerName": "batman",
+    "businessName": "queer gotham",
+    "tradeType": "gambling",
+    "residenceVillage": "butter bun boulevard",
+    "residenceCoordinates": "-1, 0;-58, -30;1",
+    "profileId": "5033921789",
+    "dateOfIssue": "2025-06-27",
+    "registrationPermitCode": "BUT-BAQU06-GAM",
+    "imageIdLink": "",
+    "stampAmount": "0",
+    "hasIdDone": false,
+    "stamps": [],
+    "id": "local-1751021170420",
+    "createdAt": "2025-06-27T10:46:10.420Z"
   }
 ]
